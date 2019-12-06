@@ -50,5 +50,5 @@ regional_income %>%
   select(-Number.of.people, -Median.hourly.earnings, -Medain.Weekly.earnings) -> CleanRegionalIncome
 CleanRegionalIncome <- gather(CleanRegionalIncome, key = "Income Measure", value = "Rate of Income" , -Year, -Region)
 
-#------All data should be cleaned and ready to be processed into ggplot-------
+#All data should be cleaned and ready to be processed into ggplot
 
