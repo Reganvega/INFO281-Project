@@ -10,7 +10,6 @@ library(tm)
 library(wordcloud)
 library(memoise)
 library(DT)
-library(leaflet)
 
 Ethnic_Data <- read.csv("EthnicData.csv", stringsAsFactors = TRUE)
 female_income <- read.csv("FemaleIncome.csv", stringsAsFactors = TRUE)
@@ -22,15 +21,13 @@ regional_income <- read.csv("RegionalIncome.csv", stringsAsFactors = TRUE)
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
-  skin = "green",
   dashboardHeader(title = "New Zealand Income Inequality Application"),
   
   dashboardSidebar(
-    #-------------------------------------Shows the selectable tabs on the Sidebar Navigation---------------------------
+    #Shows the selectable tabs on the Sidebar Navigation
     sidebarMenu(
       menuItem("Ethnic Income", tabName = "ethnic", icon = icon("bar-chart-o")),
-      menuSubItem("Ethnic Raw Data", tabName = "rawethnic", icon = icon("globe")),
-      menuSubItem("Gender Income", tabName = "gender", icon = icon("venus-mars")),
+      menuSubItem("Ethnic Raw Data", tabName = "rawethnic"),
       menuItem("Regional Income", tabName = "regional", icon = icon("th")),
       menuItem("Word Cloud", tabName = "words", icon = icon('book'))
     )
@@ -38,38 +35,23 @@ ui <- dashboardPage(
 
   dashboardBody(
     tabItems(
-#--------------------------------------------------Tab for the Ethnic data page--------------------------------------------------------
       tabItem(tabName = "ethnic",
               h2("Ethnic Income Visualisations"),
               fluidRow(
                 sidebarPanel(width = 4,
                 titlePanel("Filters"), 
-                           selectInput("yearselect", "Year:", c("All", unique(as.character(Ethnic_Data$Year)))),
+                           actionButton("malebutton", "Male"),
+                           actionButton("femalebutton", "Female"),
                            br(),
                            sliderInput("Year", "financial year", 1998,2019,1998)),
-                
-                #INFO BOX AT THE TOP FOR SUMMARISED STATS
-                infoBoxOutput("HighestAverage"),
-                infoBoxOutput("HighestPaidEthnic"),
                        
-                
+                       
                        #display the bargraph
                        box(plotlyOutput("bargraph"))
                        ),
-              
               ),
-#------------------------------------------------------Gender income page tab-----------------------------------------------------------
-        tabItem(tabName = "gender",
-                h2("Gender Income section"),
-                fluidRow(
-                  sidebarPanel(width = 4,
-                               titlePanel("Filter"),
-                               actionButton("male", "Male", icon = icon("mars")),
-                               actionButton("female", "Female", icon = icon("venus"))
-                               )
-                )),
       
-#---------------------------------------------Tab for the sub category - raw input data---------------------------------------------------
+      #Tab for the sub category - raw input data
       tabItem(tabName = "rawethnic",
               h2('Raw table Data for Ethnic Wage Data'),
              
@@ -91,31 +73,19 @@ ui <- dashboardPage(
                    
                  ),
               
-              box(title = "Legend",
-                  p("Some random trext untill i am able to fdill this in"))
+              #Code for generating the table
+              #box(DT::dataTableOutput("table")),
+              
+              box(title = "Legend")
               
               ),
       
-#-------------------------------------------Content body for Regional data visualisations----------------------------------------------------
+#Content body for Regional data visualisations
       tabItem(tabName = "regional",
-              h2("Regional Income Visualisation"),
-              fluidRow(box(width = 4,
-                           sliderInput("income_year", label = "Income Range",
-                                       min = min(regional_income$Year),
-                                       max = max(regional_income$Year),
-                                       value = c(min(regional_income$Year, max(regional_income$Year)),
-                                                 sep = "",
-                                                 step = 1)
-                           ))
-                
-              ),
-              fluidRow(
-                fluidRow(box(width = 14, leafletOutput(outputId = "nzmap"))),
-                fluidRow(box(width = 14, dataTableOutput(outputId = "summary_table")))
-              )
+              h2("Regional Income Visualisation")
              ),
       
-#--------------------------------------Content body or container for the world cloud visualisations.-------------------------------------
+#Content body or container for the world cloud visualisations.
       tabItem(tabName = "words",
               h2("Word Cloud Visualisation"),
               box(titlePanel('Select report to analyse'),
@@ -137,40 +107,12 @@ ui <- dashboardPage(
   )
 )
 
-
-#############################################################Server#######################################################################
-# Define server logic required to draw a bargraph in plotly
+# Define server logic required to draw a histogram
 server <- function(input, output) {
-  
-  yearm <- min(Ethnic_Data$Year)
-  yearM <-max(Ethnic_Data$Year)
-  
   output$bargraph <- renderPlotly({
-    #data shown depending on the year selected
-    size <- (yearm - yearM) /input$yearselect
-  
-    p <- plot_ly(Ethnic_Data, x = Ethnic_Data$Ethnicity, type = 'histogram',
-                 xyear = list(start = yearm, end = yearM, size = size))
-    
-    layout(p, xaxis = list(title = "Year", range = c(yearm, yearM)))
-    
-    })
-  
-  
-  
-  #output$bargraph <- renderPlotly({
-   # plot_ly(data = Ethnic_Data, x = Ethnic_Data$Ethnicity, y = Ethnic_Data$Average.Weekly.Earnings)
-  #})
-  
-  output$HighestAverage <- renderInfoBox({
-    infoBox("Highest Average", max(Ethnic_Data$Average.Weekly.Earnings), icon = icon("money-bill-wave"))
-  })
-  
-  output$HighestPaidEthnic <- renderInfoBox({
-    infoBox("Highest Paid Ethnic", mode(Ethnic_Data$Ethnicity), icon = icon("globe"))
+    plot_ly(data = Ethnic_Data, x = Ethnic_Data$Ethnicity, y = Ethnic_Data$Average.Weekly.Earnings, breaks = input$Year)
   })
  
-  #for word clouds
   terms <- reactive({
     #change book and update the code to reflect the changes
     input$update
@@ -182,17 +124,8 @@ server <- function(input, output) {
       })
     })
   }) 
-  #---------------------------------------------------------Leaflet map creation code--------------------------------------
   
-  data_input <- reactive({
-    regional_income %>%
-      filter(Year >= input$income_year[1]) %>%
-      filter(Year <= input$income_year[2]) %>%
-      group_by(Region)%>%
-      summarise(`Rate of Income` = n())
-  })
-  
-  #------------------------------------------------------Code for making the Word Cloud.------------------------------------
+  #Code for making the Word Cloud.
   wordcloud_rep <- repeatable(wordcloud)
   
   output$wcplot <- renderPlot({
@@ -202,7 +135,7 @@ server <- function(input, output) {
                   colors=brewer.pal(8,"Dark2"))
   })
   
-  #Code for server for Raw Table data for tab - ethnic data
+  #Code for server for Raw Table data for tab - gender data
   output$table <- DT::renderDataTable(DT::datatable({
     data <- Ethnic_Data
     if (input$year != "All") {
