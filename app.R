@@ -22,8 +22,44 @@ regional_income <- read.csv("RegionalIncome.csv", stringsAsFactors = TRUE)
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
-  skin = "green",
-  dashboardHeader(title = "New Zealand Income Inequality Application"),
+  skin = "blue",
+  dashboardHeader(title = "New Zealand Income Inequality Application", 
+                  dropdownMenu(type = "messages",
+                               messageItem(
+                                 from = "Reegs",
+                                 message = "Thank you for using this application."
+                               ),
+                               messageItem(
+                                 from = "Reegs",
+                                 message = "If you would like to know more about the features on the page, please visit the 'About' Tab.",
+                                 icon = icon("bell")
+                               )),
+                  #---------------------------------dropdown for notifications--------------------------
+                  dropdownMenu(type = "notifications",
+                               notificationItem(
+                                 text = "Thank you for listening to my presentation",
+                                 icon = icon("attention"),
+                                 status = "success"
+                               )
+                               
+                               ),
+                  #----------------------------------menu for tasks needing to be complete---------------------------------
+                  
+                  dropdownMenu(type = "tasks", badgeStatus = "success",
+                               taskItem(value = 90, color = "green",
+                                        "Documentation"
+                               ),
+                               taskItem(value = 17, color = "aqua",
+                                        "Project X"
+                               ),
+                               taskItem(value = 75, color = "yellow",
+                                        "Server deployment"
+                               ),
+                               taskItem(value = 80, color = "red",
+                                        "Overall project"
+                               )
+                         )
+                  ),
   
   dashboardSidebar(
     #-------------------------------------Shows the selectable tabs on the Sidebar Navigation---------------------------
@@ -62,11 +98,19 @@ ui <- dashboardPage(
         tabItem(tabName = "gender",
                 h2("Gender Income section"),
                 fluidRow(
-                  sidebarPanel(width = 4,
-                               titlePanel("Filter"),
+                  sidebarPanel(width = 4, 
+                               titlePanel("Filters"),
                                actionButton("male", "Male", icon = icon("mars")),
-                               actionButton("female", "Female", icon = icon("venus"))
-                               )
+                               actionButton("female", "Female", icon = icon("venus")),
+                               selectInput("maleyear", "Year of Income", choices = c(male_income$Year)),
+                               
+                               ),
+                  
+                  box(infoBoxOutput("HighestMaleIncome"),
+                      infoBoxOutput("HighestFemaleIncome")),
+                  br(), hr(),
+                  box(title = "Male Visualisation", plotlyOutput("maleincome")),
+                  box(title = "Female Visualisation", plotlyOutput("femaleincome"))
                 )),
       
 #---------------------------------------------Tab for the sub category - raw input data---------------------------------------------------
@@ -91,8 +135,14 @@ ui <- dashboardPage(
                    
                  ),
               
-              box(title = "Legend",
-                  p("Some random trext untill i am able to fdill this in"))
+              box(title = "Legend", width = 14,
+                  p("This is the raw data that is being used to fuel the Ethnic data plots. Here you will also see some key facts about the data!"),
+                  infoBox("Highest Hourly Earnings", max(Ethnic_Data$Average.Hourly.Earnings), icon = icon("arrow-alt-circle-up")),
+                  infoBox("Higest Weekly Earnings", max(Ethnic_Data$Average.Weekly.Earnings), icon = icon("caret-square-up")),
+                  infoBox("Lowest Hourly Earnings", min(Ethnic_Data$Average.Hourly.Earnings), icon = icon("arrow-alt-circle-down")),
+                  infoBox("Lowest Weekly Earnings", min(Ethnic_Data$Average.Weekly.Earnings), icon = icon("caret-down")),
+                  infoBox("Most Number of People Surveyed", max(Ethnic_Data$Number.of.People), icon = icon("user-friends"))
+                  )
               
               ),
       
@@ -121,13 +171,15 @@ ui <- dashboardPage(
               box(titlePanel('Select report to analyse'),
                   selectInput("selection", "Select a book:",
                               choices = books),
-                  actionButton("update", "change"),
+                  actionButton("update", "Change Selection"),
                   hr(),
+                  h3("Cloud Filters:"),
                   sliderInput("freq", "Minimum Frequency:",
-                              min = 1, max = 50, value = 15),
+                              min = 1, max = 50, value = 13),
                   
                   sliderInput("max", "Maximum number of words:",
-                              min = 1, max = 200, value = 90)
+                              min = 1, max = 200, value = 90),
+                  p("TIP: Adjust the Sliders based on the frequency of words stated or the quantity of words to be shown")
                   ),
               
               #word cloud container
@@ -147,10 +199,9 @@ server <- function(input, output) {
   
   output$bargraph <- renderPlotly({
     #data shown depending on the year selected
-    size <- (yearm - yearM) /input$yearselect
   
     p <- plot_ly(Ethnic_Data, x = Ethnic_Data$Ethnicity, type = 'histogram',
-                 xyear = list(start = yearm, end = yearM, size = size))
+                 xyear = list(start = yearm, end = yearM))
     
     layout(p, xaxis = list(title = "Year", range = c(yearm, yearM)))
     
@@ -167,7 +218,7 @@ server <- function(input, output) {
   })
   
   output$HighestPaidEthnic <- renderInfoBox({
-    infoBox("Highest Paid Ethnic", mode(Ethnic_Data$Ethnicity), icon = icon("globe"))
+    infoBox("Highest Paid Ethnic", "Asian", icon = icon("globe"))
   })
  
   #for word clouds
@@ -182,6 +233,16 @@ server <- function(input, output) {
       })
     })
   }) 
+  
+  #----------------------------------------------------------gender server stuff-----------------------------------------------
+  output$HighestMaleIncome <- renderInfoBox({
+    infoBox("Highest Average Male p/w", max(male_income$Average.Weekly.Earnings), icon = icon("money-bill-wave"))
+  })
+  
+  output$HighestFemaleIncome <- renderInfoBox({
+    infoBox("Highest Female Average P/W", max(female_income$Average.Weekly.Earnings), icon = icon("money-bill-wave"))
+  })
+  
   #---------------------------------------------------------Leaflet map creation code--------------------------------------
   
   data_input <- reactive({
@@ -214,8 +275,7 @@ server <- function(input, output) {
     }
     data
   }))
-  
-  
+
   
   
 }
