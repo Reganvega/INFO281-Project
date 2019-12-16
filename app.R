@@ -66,9 +66,10 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Ethnic Income", tabName = "ethnic", icon = icon("bar-chart-o")),
       menuSubItem("Ethnic Raw Data", tabName = "rawethnic", icon = icon("globe")),
-      menuSubItem("Gender Income", tabName = "gender", icon = icon("venus-mars")),
+      menuItem("Gender Income", tabName = "gender", icon = icon("venus-mars")),
       menuItem("Regional Income", tabName = "regional", icon = icon("th")),
-      menuItem("Word Cloud", tabName = "words", icon = icon('book'))
+      menuItem("Word Cloud", tabName = "words", icon = icon('book')),
+      menuItem("About", tabName = "about", icon = icon("info"))
     )
   ),
 
@@ -80,9 +81,18 @@ ui <- dashboardPage(
               fluidRow(
                 sidebarPanel(width = 4,
                 titlePanel("Filters"), 
-                           selectInput("yearselect", "Year:", c("All", unique(as.character(Ethnic_Data$Year)))),
+                           selectInput("ethnicyearselect", "Year:", c("All", unique(as.character(Ethnic_Data$Year)))),
+                actionButton("ethnic2000", "2000"),
+                actionButton("ethnic2001", "2001"),
+                
                            br(),
-                           sliderInput("Year", "financial year", 1998,2019,1998)),
+                selectInput("ethniccharts", "Change the type of graph would would like to use", choices = list("bar",
+                                                                                                         "scatter",
+                                                                                                         "histogram",
+                                                                                                         "scatter3d"
+                ),
+                selected = "bar" ),
+                ),
                 
                 #INFO BOX AT THE TOP FOR SUMMARISED STATS
                 infoBoxOutput("HighestAverage"),
@@ -90,28 +100,65 @@ ui <- dashboardPage(
                        
                 
                        #display the bargraph
-                       box(plotlyOutput("bargraph"))
+                       box(plotlyOutput("ethnicgraph"))
                        ),
               
               ),
 #------------------------------------------------------Gender income page tab-----------------------------------------------------------
         tabItem(tabName = "gender",
                 h2("Gender Income section"),
-                fluidRow(
-                  sidebarPanel(width = 4, 
-                               titlePanel("Filters"),
-                               actionButton("male", "Male", icon = icon("mars")),
-                               actionButton("female", "Female", icon = icon("venus")),
-                               selectInput("maleyear", "Year of Income", choices = c(male_income$Year)),
-                               
-                               ),
-                  
-                  box(infoBoxOutput("HighestMaleIncome"),
-                      infoBoxOutput("HighestFemaleIncome")),
-                  br(), hr(),
-                  box(title = "Male Visualisation", plotlyOutput("maleincome")),
-                  box(title = "Female Visualisation", plotlyOutput("femaleincome"))
-                )),
+                fluidPage(
+                  fluidRow(
+                    column(12, box( width = 12,
+                      titlePanel("Filters - select first"),
+                      h3("Male Filters                                   Female Filters"),
+                      actionButton("maleweekly", "Male Weekly Average", icon = icon("mars")),
+                      actionButton("malehourly", "Male Hourly Average", icon = icon("mars")),
+                      hr(),
+                      h3("Type of graph to be drawn"),
+                      
+                      #!-----------------------------------give the user the option to select which kind of visualisation they would like-----------------------------
+                      
+                      selectInput("charts", "Change the type of graph would would like to use", choices = list("bar",
+                                                                                                               "scatter",
+                                                                                                               "histogram",
+                                                                                                               "scatter3d"
+                                                                                                               ),
+                                  selected = "bar" ),
+                      hr(),
+                      h3("Female Filters"),
+                      actionButton("femaleweekly", "Female Weekly Average", icon = icon("venus")),
+                      actionButton("femalehourly", "Female Hourly Average", icon = icon("venus")),
+                      hr(),
+                      tags$h4("Please select an option before a plot will be produced"),
+                      h3("Key Statistics", icon = icon("info-circle")),
+                      hr(),
+                      )
+                           
+                           
+                    ),
+                    
+                    #!---------------------------------------------------Statistics module in the page--------------------------------
+                    
+                   column(12,
+                          infoBoxOutput("HighestMaleIncome"),
+                          infoBoxOutput("HighestFemaleIncome"),
+                          infoBoxOutput("LowestMaleIncome"),
+                          infoBoxOutput("LowestFemaleIncome"),
+                          infoBoxOutput("Malehourly"),
+                          infoBoxOutput("Femalehourly")
+                          ),
+                
+                           br(), hr(),
+                           box(title = "Male Visualisation", plotlyOutput("maleincome")),
+                           br(),
+                           box(title = "Female Visualisation", plotlyOutput("femaleincome"))
+                    
+                    
+                  )
+                ),
+                
+                ),
       
 #---------------------------------------------Tab for the sub category - raw input data---------------------------------------------------
       tabItem(tabName = "rawethnic",
@@ -164,6 +211,8 @@ ui <- dashboardPage(
                 fluidRow(box(width = 14, dataTableOutput(outputId = "summary_table")))
               )
              ),
+
+#USE PLOTLY scattergeo 
       
 #--------------------------------------Content body or container for the world cloud visualisations.-------------------------------------
       tabItem(tabName = "words",
@@ -184,7 +233,45 @@ ui <- dashboardPage(
               
               #word cloud container
               box(plotOutput("wcplot"))
+              ),
+#-------------------------------------------------ABOUT and SUBMISSION DETAILS-------------------------------------------
+      tabItem(tabName = "about",
+             h1("Project Information"),
+                fluidRow(
+                    box(
+                        title = "About the Application",
+                        hr(),
+                        p("This Application was developed for the sole purpose of the INFO281 ST:Data Analytics Paper at Victoria University of Wellington"),
+                        hr(),
+                        h2("Author Information"),
+                        h3("Name: Regan Vega"),
+                        h3("Student ID: 300421287"),
+                        h3("Contact: vegarega@myvuw.ac.nz"),
+                        h4("All information that was used to formulate data will be referenced below"),
+                        h4("NZ Stats: http://nzdotstat.stats.govt.nz/wbos/Index.aspx?_ga=2.103915008.1875428239.1573422165-1250021736.1573422165#", br(), br(),
+                           "Ministry for Women: https://women.govt.nz/work-skills/income/gender-pay-gap", br(), br(),
+                           "Employment NZ: https://www.employment.govt.nz/hours-and-wages/pay/pay-equity/gender-pay-gap/", br(), br(),
+                           "The Treasury: https://treasury.govt.nz/sites/default/files/2018-08/ap18-03.pdf"
+                           ),
+                        hr(),
+                        
+                    ),
+                    box(
+                      title = "Application Help",
+                      hr(),
+                      h3("Ethnic Data Tab"),
+                      p(""),
+                      h3("Ethnic Raw Tab"),
+                      p(""),
+                      h3("Gender Income Tab"),
+                      p(""),
+                      h3("Regional Income Tab"),
+                      p(""),
+                      h3("Word Cloud Tab"),
+                      p(""),
+                    ),
               )
+          )
     )
   )
 )
@@ -194,18 +281,58 @@ ui <- dashboardPage(
 # Define server logic required to draw a bargraph in plotly
 server <- function(input, output) {
   
-  yearm <- min(Ethnic_Data$Year)
-  yearM <-max(Ethnic_Data$Year)
-  
-  output$bargraph <- renderPlotly({
-    #data shown depending on the year selected
-  
-    p <- plot_ly(Ethnic_Data, x = Ethnic_Data$Ethnicity, type = 'histogram',
-                 xyear = list(start = yearm, end = yearM))
-    
-    layout(p, xaxis = list(title = "Year", range = c(yearm, yearM)))
-    
+  observeEvent(input$ethnicyearselect, {
+   
+    ethnicdata <- filter(Ethnic_Data, Year == input$ethnicyearselect)
+     
+    output$ethnicgraph <- renderPlotly({
+      ep <- plot_ly(
+        x = ethnicdata$Ethnicity,
+        y = ethnicdata$Average.Weekly.Earnings,
+        type = input$ethniccharts,
+        name = 'ethnics'
+      ) %>%
+        layout(
+          title = "Comparisons of Ethnic Income 2008",
+          xaxis = list(
+            type = 'category',
+            title = 'Ethnic incomes'
+          ),
+          yaxis = list(
+            title = "Income Received"
+          )
+        )
+      
     })
+    
+  })
+  
+  
+  observeEvent(input$ethnic2001, {
+    filterdata <- filter(Ethnic_Data, Year == "2001")
+    
+    output$ethnicgraph <- renderPlotly({
+      ep <- plot_ly(
+        x = filterdata$Ethnicity,
+        y = filterdata$Average.Weekly.Earnings,
+        type = input$ethniccharts,
+        name = 'ethnics'
+      ) %>%
+        layout(
+          title = "Comparisons of Ethnic Income 2001",
+          xaxis = list(
+            type = 'category',
+            title = 'Ethnic incomes'
+          ),
+          yaxis = list(
+            title = "Income Received"
+          )
+        )
+      
+    })
+    
+  })
+  
   
   
   
@@ -242,6 +369,114 @@ server <- function(input, output) {
   output$HighestFemaleIncome <- renderInfoBox({
     infoBox("Highest Female Average P/W", max(female_income$Average.Weekly.Earnings), icon = icon("money-bill-wave"))
   })
+  
+  output$LowestMaleIncome <- renderInfoBox({
+    infoBox("Lowest Male Average P/W", min(male_income$Average.Weekly.Earnings), icon = icon("money-bill-wave"))
+  })
+  
+  output$LowestFemaleIncome <- renderInfoBox({
+    infoBox("Lowest Female Average P/W", min(female_income$Average.Weekly.Earnings), icon = icon("money-bill-wave"))
+  })
+  
+  output$Malehourly <- renderInfoBox({
+    infoBox("Current Male Hourly Rate", max(male_income$Average.Hourly.Earnings), icon = icon("percent"))
+  })
+  
+  output$Femalehourly <- renderInfoBox({
+    infoBox("Current Female Hourly Rate", max(female_income$Average.Hourly.Earnings), icon = icon("percent"))
+  })
+  
+  #!!!!!!!!!!!!!!!!!!!!!!!!!!Gender plots section!!!!!!!!!!!!!!!!!!!! 
+  
+  mgs <- observeEvent(input$maleweekly, {
+    output$maleincome <- renderPlotly({
+      p1m <- plot_ly(
+        x = male_income$Year,
+        y = male_income$Average.Weekly.Earnings,
+        type = input$charts,
+        name = "Male Income"
+      ) %>%
+        layout(
+          title = "Comparison of Male weekly Income by Year",
+          xaxis = list(
+            type = 'category',
+            title = 'Year'
+          ),
+          yaxis = list(
+            title = 'Weekly Rate'
+          )
+        )
+      
+    })
+  })
+  
+  observeEvent(input$malehourly, {
+    output$maleincome <- renderPlotly({
+      p1m <- plot_ly(
+        x = male_income$Year,
+        y = male_income$Average.Hourly.Earnings,
+        type = input$charts,
+        name = "Male Income"
+      ) %>%
+        layout(
+          title = "Comparison of Male Hourly Incomes by Year",
+          xaxis = list(
+            type = 'category',
+            title = 'Year'
+          ),
+          yaxis = list(
+            title = 'Hourly Rate'
+          )
+        )
+      
+    })
+    
+  })
+ 
+  fgs <- observeEvent(input$femaleweekly, {
+    output$femaleincome <- renderPlotly({
+      p1f <- plot_ly(
+        x = female_income$Year,
+        y = female_income$Average.Weekly.Earnings,
+        type = input$charts,
+        name = 'Female Income Weekly'
+      ) %>%
+      layout(
+        title = 'Female Weekly Average income by Year',
+        xaxis = list(
+          type = 'category',
+          title = 'Year'
+        ),
+        yaxis = list(
+          title = 'Weekly Income'
+        )
+      )
+    })
+    
+  }) 
+  
+  observeEvent(input$femalehourly, {
+    output$femaleincome <- renderPlotly({
+      p1f <- plot_ly(
+        x = female_income$Year,
+        y = female_income$Average.Hourly.Earnings,
+        type = input$charts,
+        name = 'Female Income Hourly Rate'
+      ) %>%
+        layout(
+          title = 'Female Average Hourly income by Year',
+          xaxis = list(
+            type = 'category',
+            title = 'year'
+          ),
+          yaxis = list(
+            title = 'Hourly Rate'
+          )
+        )
+    })
+    
+  }) 
+  
   
   #---------------------------------------------------------Leaflet map creation code--------------------------------------
   
