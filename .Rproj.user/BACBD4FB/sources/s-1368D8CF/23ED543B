@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576450296273.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "23ED543B",
+    "lastKnownWriteTime" : 1576504051,
+    "last_content_update" : 1576504051,
+    "path" : "C:/Users/regan/OneDrive/University Materials/2019/Summer/INFO281/INFO281 Project/app.R",
+    "project_path" : "app.R",
+    "properties" : {
+        "cursorPosition" : "0,0",
+        "scrollLine" : "55"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
