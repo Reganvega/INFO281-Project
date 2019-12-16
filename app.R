@@ -13,7 +13,7 @@ library(DT)
 library(leaflet)
 library(rgdal)
 
-register_google(key = "AIzaSyDq2ddvrrpOpg5yfzQmcCxORk3y5_xhaxY")
+register_google(key = "will re add before demonstration")
 
 Ethnic_Data <- read.csv("EthnicData.csv", stringsAsFactors = TRUE)
 female_income <- read.csv("FemaleIncome.csv", stringsAsFactors = TRUE)
