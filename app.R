@@ -85,37 +85,40 @@ ui <- dashboardPage(
                 sidebarPanel(width = 12,
                 titlePanel("Filters"), 
                            selectInput("ethnicyearselect", "Select Year:", c(unique(as.character(Ethnic_Data$Year)))),
-                
-                           
+       
                 h3("Choose type or graph to display"),
                 selectInput("ethniccharts", "Change the type of graph would would like to use", choices = list("bar",
                                                                                                          "scatter",
                                                                                                          "histogram",
                                                                                                          "scatter3d"
-                ),
-                selected = "bar" ),
+                            ),
+                            selected = "bar" ),
+                            
+            
+                            
+                            ),
+                            fluidPage(column(12,
+                                            valueBoxOutput("selectedyearaverage1"), 
+                                            valueBoxOutput("selectedyearaverage2"),
+                                            valueBoxOutput("HighestAverage"),
+                                            )
+            
+                            ),
+                            
+                                   #display the bargraph
+                                   box(
+                                      plotlyOutput("ethnicgraph")
+                                     ),
+                                    box(
+                                      plotlyOutput('ethnicthird')
+                                    ),
                 
-
-                
-                ),
-                fluidPage(column(12,
-                                valueBoxOutput("selectedyearaverage1"), 
-                                valueBoxOutput("selectedyearaverage2"),
-                                valueBoxOutput("HighestAverage"),
-                                )
-
-                ),
-                
-                       #display the bargraph
-                       box(
-                          plotlyOutput("ethnicgraph")
-                         ),
-                        box(
-                           DT::dataTableOutput("ethnictable")
-                          )
-                       ),
-              
-              ),
+                                    box(width = 12,
+                                       DT::dataTableOutput("ethnictable")
+                                      )
+                                   ),
+                          
+                 ),
 #------------------------------------------------------Gender income page tab-----------------------------------------------------------
         tabItem(tabName = "gender",
                 h2("Gender Income section"),
@@ -136,7 +139,7 @@ ui <- dashboardPage(
                                                                                                                "histogram",
                                                                                                                "scatter3d"
                                                                                                                ),
-                                  selected = "bar" ),
+                                                                                            selected = "bar" ),
                       hr(),
                       h3("Female Filters"),
                       actionButton("femaleweekly", "Female Weekly Average", icon = icon("venus")),
@@ -146,8 +149,7 @@ ui <- dashboardPage(
                       h3("Key Statistics", icon = icon("info-circle")),
                       hr(),
                       )
-                           
-                           
+
                     ),
                     
                     #!---------------------------------------------------Statistics module in the page--------------------------------
@@ -165,11 +167,10 @@ ui <- dashboardPage(
                            box(title = "Male Visualisation", plotlyOutput("maleincome")),
                            br(),
                            box(title = "Female Visualisation", plotlyOutput("femaleincome"))
-                    
-                    
+
                   )
                 ),
-                
+
                 ),
       
 #---------------------------------------------Tab for the sub category - raw input data---------------------------------------------------
@@ -194,16 +195,16 @@ ui <- dashboardPage(
                    
                  ),
               
-              box(title = "Legend", width = 14,
-                  p("This is the raw data that is being used to fuel the Ethnic data plots. Here you will also see some key facts about the data!"),
-                  valueBox(max(Ethnic_Data$Average.Hourly.Earnings), "Highest Hourly Earnings", icon = icon("arrow-alt-circle-up")),
-                  valueBox(max(Ethnic_Data$Average.Weekly.Earnings), "Higest Weekly Earnings", icon = icon("caret-square-up")),
-                  valueBox(min(Ethnic_Data$Average.Hourly.Earnings), "Lowest Hourly Earnings", icon = icon("arrow-alt-circle-down")),
-                  valueBox(min(Ethnic_Data$Average.Weekly.Earnings), "Lowest Weekly Earnings", icon = icon("caret-down")),
-                  valueBox(max(Ethnic_Data$Number.of.People), "Most Number of People Surveyed", icon = icon("user-friends"))
-                  )
-              
-              ),
+                box(title = "Legend", width = 14,
+                    p("This is the raw data that is being used to fuel the Ethnic data plots. Here you will also see some key facts about the data!"),
+                    valueBoxOutput("ethnics1"),
+                    valueBoxOutput("ethnics2"),
+                    valueBoxOutput("ethnics3"),
+                    valueBoxOutput("ethnics4"),
+                    valueBoxOutput("ethnics5")
+                    )
+                
+                ),
       
 #-------------------------------------------Content body for Regional data visualisations----------------------------------------------------
       tabItem(tabName = "regional",
@@ -229,7 +230,6 @@ ui <- dashboardPage(
               h3("New Zealand Leaflet Map"),
               hr(),
               
-              
               fluidRow(tabBox(width = 12,
                 title = "Visualisation",
                 tabPanel("Leaflet",
@@ -251,13 +251,11 @@ ui <- dashboardPage(
                          plotlyOutput(outputId = "femaleregion"),
                          valueBoxOutput("wagedifference")
                 )
-
               ),
-
               )
              ),
 
-#USE PLOTLY scattergeo 
+
       
 #--------------------------------------Content body or container for the world cloud visualisations.-------------------------------------
       tabItem(tabName = "words",
@@ -352,23 +350,30 @@ server <- function(input, output) {
     
   })
   
-observeEvent(input$ethnicyearselect, {
-  ethnicdata <- filter(Ethnic_Data, Year == input$ethnicyearselect)
+  observeEvent(input$ethnicyearselect, {
+    ethnicdata <- filter(Ethnic_Data, Year == input$ethnicyearselect)
   
   output$selectedyearaverage1 <- renderValueBox({
-    valueBox(max(ethnicdata$Average.Weekly.Earnings), "Current selected year high",  icon = icon("money-bill-wave"))
+    valueBox(max(ethnicdata$Average.Weekly.Earnings), "Current selected year high",  icon = icon("money-bill-wave"), color = "purple")
   })
   
   output$selectedyearaverage2 <- renderValueBox({
-    valueBox(max(ethnicdata$Average.Hourly.Earnings), "Current selected year high", icon = icon("money-bill-wave"))
+    valueBox(max(ethnicdata$Average.Hourly.Earnings), "Current selected year high", icon = icon("money-bill-wave"), color = "yellow")
   })
   
+  output$HighestAverage <- renderValueBox({
+    valueBox(max(ethnicdata$Average.Weekly.Earnings), "Highest Average", icon = icon("money-bill-wave"))
+  })
   
 })
   
-  
-  output$HighestAverage <- renderValueBox({
-    valueBox(max(Ethnic_Data$Average.Weekly.Earnings), "Highest Average", icon = icon("money-bill-wave"))
+  output$ethnicthird <- renderPlotly({
+    p5 <- plot_ly(Ethnic_Data, x = ~Ethnic_Data$Average.Weekly.Earnings, y = ~Ethnic_Data$Year, z = ~Ethnic_Data$Ethnicity, color = ~Ethnic_Data$Ethnicity, colors = c('#4b3bf7', '#f7673b') ) %>%
+      add_markers() %>%
+      layout(scene = list(xaxis = list(title = 'Average Weekly Earning'),
+                          yaxis = list(title = 'Year'),
+                          zaxis = list(title = 'Ethnicity')))
+    
   })
   
   
@@ -543,7 +548,6 @@ observeEvent(input$ethnicyearselect, {
       
     })
     
-    
   })
   
   nzregions <- readOGR("data/NewZealandPolygon70.shp")
@@ -563,7 +567,7 @@ observeEvent(input$ethnicyearselect, {
     
     p1 <- regional_income %>%
       ggplot(aes(x = Year, y = Average.Weekly.earnings, color = Region)) +
-      scale_color_brewer(palette = "Set1") +
+      scale_color_brewer(palette = "Paired") +
       ylab("Average Weekly Earnings") + 
       theme_minimal(base_size = 10) + 
       geom_point() +
@@ -575,47 +579,47 @@ observeEvent(input$ethnicyearselect, {
   })
   
   output$regional1 <- renderValueBox({
-    valueBox(max(regional_income$Average.Weekly.earnings), "Highest Weekly Earnings by region", icon = icon("globe"))
+    valueBox(max(regional_income$Average.Weekly.earnings), "Highest Weekly Earnings by region", icon = icon("globe"), color = 'yellow')
   })
   
   output$regional2 <- renderValueBox({
-    valueBox(max(regional_income$Average.hourly.earnings), "Highest Hourly Earning in New Zealand", icon = icon("warning"))
+    valueBox(max(regional_income$Average.hourly.earnings), "Highest Hourly Earning in New Zealand", icon = icon("warning"), color = 'fuchsia')
   })
   
   output$regional3 <- renderValueBox({
-    valueBox(min(regional_income$Average.Weekly.earnings), "Lowest Recorded Weekly earning", icon = icon("money-bill-wave"))
+    valueBox(min(regional_income$Average.Weekly.earnings), "Lowest Recorded Weekly earning", icon = icon("money-bill-wave"), color = 'maroon')
   })
   
   output$regional4 <- renderValueBox({
-    valueBox(min(regional_income$Average.hourly.earnings), "Lowest Recorded Hourly Rate", icon = icon("money-bill-wave"))
+    valueBox(min(regional_income$Average.hourly.earnings), "Lowest Recorded Hourly Rate", icon = icon("money-bill-wave"), color = 'orange')
   })
   
   #------------------------------!!! Tab 3 gender region !!! ----------------------------------
   
   output$maleregion <- renderPlotly({
-    p3 <- male_regional %>%
-      ggplot(aes(x = Year, y = Average.Weekly.earnings, color = Region)) +
-      scale_color_brewer(palette = "set4") +
+    p2 <- male_regional %>%
+      ggplot(aes(x = Year, y = Average.Weekly.earnings, color = male_regional$Region)) +
+      scale_color_brewer(palette ="Paired") +
       ylab("Average Weekly Earnings") + 
       theme_minimal(base_size = 10) + 
       geom_point() +
       geom_line() +
       xlim(1998,2019) +
       ggtitle("Average Male Weekly Earnings in New Zealand by Year")
-    ggplotly(p3)
+    ggplotly(p2)
   })
   
   output$femaleregion <- renderPlotly({
-    p4 <- female_Regional %>%
+    p3 <- female_Regional %>%
       ggplot(aes(x = Year, y = Average.Weekly.earnings, color = Region)) +
-      scale_color_brewer(palette = "set3") +
+      scale_color_brewer(palette = "Paired") +
       ylab("Average Weekly Earnings") + 
       theme_minimal(base_size = 10) + 
       geom_point() +
       geom_line() +
       xlim(1998,2019) +
       ggtitle("Average female Weekly Earnings in New Zealand by Year")
-    ggplotly(p4)
+    ggplotly(p3)
   })
   
   #------------------------------------------------------Code for making the Word Cloud.------------------------------------
@@ -662,6 +666,30 @@ observeEvent(input$ethnicyearselect, {
     
     data
   }))
+  
+  observeEvent(input$year, {
+    data <- Ethnic_Data
+    output$ethnics1 <- renderValueBox({
+      valueBox(max(data$Average.Hourly.Earnings), "Highest Hourly Earnings", icon = icon("arrow-alt-circle-up"))
+      })
+    
+    output$ethnics2 <- renderValueBox({
+      valueBox(max(data$Average.Weekly.Earnings), "Higest Weekly Earnings", icon = icon("caret-square-up"))
+    })
+    
+    output$ethnics3 <- renderValueBox({
+      valueBox(min(data$Average.Hourly.Earnings), "Lowest Hourly Earnings", icon = icon("arrow-alt-circle-down"))
+    })
+    
+    output$ethnics4 <- renderValueBox({
+      valueBox(min(data$Average.Weekly.Earnings), "Lowest Weekly Earnings", icon = icon("caret-down"))
+    })
+    
+    output$ethnics5 <- renderValueBox({
+      valueBox(max(data$Number.of.People), "Most Number of People Surveyed", icon = icon("user-friends"))
+    })
+    
+  })
   
 }
 
